@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <style>      
+      body {
+        font-family: 'Open Sans';
+      }
+      .rowLabel, .colLabel, .legendLabel {
+        font-size:11px;
+      }
+      rect.bordered {
+        stroke: #E6E6E6;
+        stroke-width:2px;   
+      }
+    </style>
+    <script src="colorbrewer.js"></script>
+    <script src="http://d3js.org/d3.v3.js"></script>
+  </head>
+  <body>
+    <div>
+      <button onclick="loadHeatmap('size');";>Size</button>
+      <button onclick="loadHeatmap('overlaps')";>Overlaps</button>
+    </div>
+    <div id="chart"></div>
+    </div>
+    
+    <script src="heatmapD3.js"></script>
+    
+    <script type="text/javascript">
+      var heatmap = null;
+
+      function loadHeatmap(scoreField) {
+        d3.json("giggle.json", function(error, data) {
+          heatmap = new heatmapD3().cellSize(15)
+                                       .legendCellSize(20)
+                                       .margin({top: 10, bottom: 10, left: 10, right: 70})
+                                       .colors(colorbrewer.YlGnBu[9]);
+  //                                   .colors(colorbrewer.Oranges[9]);
+
+          heatmap.score( function(d) { return d[scoreField]} );
+
+          var selection = d3.select("#chart").datum(data);
+          heatmap(selection);
+        });
+
+      }
+
+      loadHeatmap("size");
+      
+    </script>
+  
+  </body>
+</html>

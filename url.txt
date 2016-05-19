@@ -1,0 +1,1 @@
+http://potter.genetics.utah.edu:8080/?region=chr1:1-5000000
