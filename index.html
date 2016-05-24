@@ -3,53 +3,79 @@
 <html>
   <head>
     <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link href="assets/css/bootstrap-material-design.min.css" rel='stylesheet' type='text/css'>
+    <link href="assets/css/ripples.min.css" rel='stylesheet' type='text/css'>
     <style>      
       body {
         font-family: 'Open Sans';
+        background-color: white;
+        color:  #757474;
+        font-size: 13px;
       }
       .rowLabel, .colLabel, .legendLabel {
         font-size:11px;
+        fill: #757474;
       }
       rect.bordered {
         stroke: #E6E6E6;
         stroke-width:2px;   
       }
+      .checkbox label, .radio label, label {
+        color: #757474;
+        font-size: 13px;
+      }
+      .radio-value-field.radio label span {
+        left: 25px;
+      }
+      #go-button {
+        font-size: 13px;
+        padding-bottom: 5px;
+        padding-top: 5px;
+        margin-top: 0px;        
+      }
+      #control-panel {
+        margin-top:10px;
+      }
     </style>
-    <script src="colorbrewer.js"></script>
-    <script src="http://d3js.org/d3.v3.js"></script>
   </head>
   <body>
-    <div>
-      <button onclick="loadHeatmap('size');";>Size</button>
-      <button onclick="loadHeatmap('overlaps')";>Overlaps</button>
+    <div class="container">
+      <div id="control-panel">
+        <div style="margin-top:5px;float:left;inline-block">
+          <label>Overlaps</label>
+          <input id="overlaps" value="chr1:1-5000000"></input>
+          <button id="go-button" onclick="loadHeatmap()" class="btn btn-default btn-raised">Go</button>
+        </div>
+        <div style="float:left;inline-block;margin-left:50px;">
+          <span style="display:inline-block" class="radio-value-field radio radio-primary">
+            <label>
+              <input type="radio" name="radio-value-field" id="radio-value-overlaps" onclick="loadHeatmap();" checked="true" value="overlaps">
+             Overlaps
+            </label>
+          </span>
+          <span style="display:inline-block" class="radio-value-field radio radio-primary">
+            <label>
+              <input type="radio" name="radio-value-field" onclick="loadHeatmap();" id="radio-value-size" value="size" >
+              Size
+            </label>
+          </span>
+        </div>
+      </div>
     </div>
     <div id="chart"></div>
     </div>
     
+    <!-- Latest compiled and minified CSS -->
+    <script   src="https://code.jquery.com/jquery-1.12.4.min.js"   integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="   crossorigin="anonymous"></script>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <script src="assets/js/material.min.js"></script>
+    <script src="assets/js/ripples.min.js"></script>
+    <script src="assets/js/colorbrewer.js"></script>
+    <script src="http://d3js.org/d3.v3.js"></script>
     <script src="heatmapD3.js"></script>
-    
-    <script type="text/javascript">
-      var heatmap = null;
-
-      function loadHeatmap(scoreField) {
-        d3.json("giggle.json", function(error, data) {
-          heatmap = new heatmapD3().cellSize(15)
-                                       .legendCellSize(20)
-                                       .margin({top: 10, bottom: 10, left: 10, right: 70})
-                                       .colors(colorbrewer.YlGnBu[9]);
-  //                                   .colors(colorbrewer.Oranges[9]);
-
-          heatmap.score( function(d) { return d[scoreField]} );
-
-          var selection = d3.select("#chart").datum(data);
-          heatmap(selection);
-        });
-
-      }
-
-      loadHeatmap("size");
-      
-    </script>
+    <script src="app.js"></script>
   
   </body>
 </html>
