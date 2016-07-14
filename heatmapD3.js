@@ -9,7 +9,15 @@ function heatmapD3() {
 	var rowLabelWidth = 420;
 	var colLabelHeight = 110;
 
-	var score = function(d) { return +d.size; };
+	var score    = function(d) { return +d.overlaps; };
+
+	var rowLabels  = function(d) { return d.dimensions[0].elements};
+	var colLabels  = function(d) { return d.dimensions[1].elements};
+	var cellData  = function(d) { return d.cells};
+	var cellRow   = function(d) { return +d.row; };
+	var cellCol   = function(d) { return +d.col; };
+	var cellValue = function(d) { return +d.overlaps; };
+
 
 	var buckets = 9;
 	var colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]; // alternatively colorbrewer.YlGnBu[9]
@@ -26,16 +34,16 @@ function heatmapD3() {
 
 		selection.each(function(jsonData) {
 
-			var data = jsonData.files;
-			rowNames = jsonData.dim2.vals;
-			colNames = jsonData.dim1.vals;
+			var data = cellData(jsonData);
+			rowNames = rowLabels(jsonData);
+			colNames = colLabels(jsonData);
 
 			var width  = (colNames.length*cellSize);
 			var height = (rowNames.length*cellSize);
 
 			var colorScale = d3.scale
 			                   .quantize()
-			                   .domain([0, buckets - 1, d3.max(data, function (d) { return score(d); })])
+			                   .domain([0, buckets - 1, d3.max(data, function (d) { return cellValue(d); })])
 			                   .range(colors);
 
 			d3.select('#chart svg').remove();
@@ -96,43 +104,38 @@ function heatmapD3() {
 				                     (rowLabelWidth + +margin.left + cellSize) + "," + (colLabelHeight + +margin.top + cellSize) + ")");
 
 			var cells = cellGroup.selectAll(".score")
-					             .data(data, function(d) {
-					                  return d.info.dim1+':'+d.info.dim2;
-					              });
+					             .data(data);
 
-			cells.append("title");
+			
 
 			cells.enter()
 				 .append("rect")
-				  .attr("x", function(d) { 
-				    // oops. dim1 and dim2 are switched around
-				    //return (rowIndex[d.info.dim1] - 1) * cellSize; 
-				    return (colIndex[d.info.dim2] - 1) * cellSize; 
+				  .attr("x", function(d) { 				    
+				    return (cellCol(d) - 1) * cellSize; 
 				  })
 				  .attr("y", function(d) { 
-				    // oops. dim1 and dim2 are switched around
-				    //return (colIndex[d.info.dim2] - 1) * cellSize; 
-				    return (rowIndex[d.info.dim1] - 1) * cellSize; 
+				    return (cellRow(d) - 1) * cellSize; 
 				  })
-				  .attr("rx", 4)
-				  .attr("ry", 4)
+				  .attr("rx", 0)
+				  .attr("ry", 0)
 				  .attr("class", "score bordered")
 				  .attr("width", cellSize)
 				  .attr("height", cellSize)
 				  .style("fill", colors[0])
 				  .on("click", function(d) {
-			            dispatch.d3click(d, on);
+					  	var cellObject = $().extend(d);
+					  	cellObject.rowLabel = rowNames[cellRow(d)];
+					  	cellObject.colLabel = colNames[cellCol(d)];
+			            dispatch.d3click(cellObject);
 		          });
 
 			cells.transition()
 			     .duration(1000)
 			     .style("fill", function(d) { 
-			        return colorScale(score(d)); 
+			        return colorScale(cellValue(d)); 
 			     });
 
-			cells.select("title").text(function(d) { 
-				return info.dim1 + ", " + info.dim2 + " = " + score(d); 
-			});
+			
 
 			cells.exit().remove();
 
@@ -148,7 +151,7 @@ function heatmapD3() {
 				                    + "," 
 				                    + (colLabelHeight + margin.top) + ")");
 
-
+			legendGroup.selectAll(".legend").remove();
 			var legend = legendGroup.selectAll(".legend")
 			                        .data(breaks);
 
@@ -175,11 +178,37 @@ function heatmapD3() {
 
         }); 				
 	}
-	chart.score = function(_) {
-		if (!arguments.length) return score;
-			score = _;
+	chart.cellValue = function(_) {
+		if (!arguments.length) return cellValue;
+			cellValue = _;
 		return chart;
 	};
+	chart.rowLabels = function(_) {
+		if (!arguments.length) return rowLabels;
+			rowLabels = _;
+		return chart;
+	};
+	chart.colLabels = function(_) {
+		if (!arguments.length) return colLabels;
+			colLabels = _;
+		return chart;
+	};
+	chart.cellData = function(_) {
+		if (!arguments.length) return cellData;
+			cellData = _;
+		return chart;
+	};
+	chart.cellRow = function(_) {
+		if (!arguments.length) return cellRow;
+			cellRow = _;
+		return chart;
+	};	
+	chart.cellCol = function(_) {
+		if (!arguments.length) return cellCol;
+			cellCol = _;
+		return chart;
+	};	
+
 	chart.margin = function(_) {
 		if (!arguments.length) return margin;
 			margin = _;

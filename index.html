@@ -47,7 +47,7 @@
           <input id="overlaps" value="chr1:1-5000000"></input>
           <button id="go-button" onclick="loadHeatmap()" class="btn btn-default btn-raised">Go</button>
         </div>
-        <div style="float:left;inline-block;margin-left:50px;">
+        <div class="hide" style="float:left;inline-block;margin-left:50px;">
           <span style="display:inline-block" class="radio-value-field radio radio-primary">
             <label>
               <input type="radio" name="radio-value-field" id="radio-value-overlaps" onclick="loadHeatmap();" checked="true" value="overlaps">
@@ -65,7 +65,24 @@
     </div>
     <div id="chart"></div>
     </div>
-    
+
+
+<div class="modal fade" id="overlaps-modal" tabindex="-1" role="dialog">
+  <div  class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header" style="padding-top:10px;">
+       <h3>Overlaps</h3>
+      </div>
+      <div class="modal-body" style="height: 300px;overflow-y: scroll;margin-top: 0px;padding-top: 0px;">
+     
+      </div>
+      <div class="modal-footer" style="clear-both">
+          <button type="button" class="btn btn-default icon-button-sm btn btn-default btn-raised" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>    
+
     <!-- Latest compiled and minified CSS -->
     <script   src="https://code.jquery.com/jquery-1.12.4.min.js"   integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="   crossorigin="anonymous"></script>
 
