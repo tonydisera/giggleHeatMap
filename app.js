@@ -1,10 +1,19 @@
 var heatmap = null;
-var giggleUrl = "http://potter.genetics.utah.edu:8080/";
-var scoreField = "";
 
+var giggleUrl            = "http://potter.genetics.utah.edu:8080/";
+var giggleUCSCBrowserUrl = "http://potter.genetics.utah.edu:8081/"
+var ucscBrowserUrl       = "https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19";
+
+var sourceFileMap = {};	
+var coordMap = {};
+
+var ucscFileMap = {};
+var ucscTrackNames = [];
 
 $(document).ready(function() {
 	$.material.init();
+
+	loadUCSCDefinition();
 
 	heatmap = new heatmapD3().cellSize(15)
                              .legendCellSize(20)
@@ -12,20 +21,94 @@ $(document).ready(function() {
                              .colors(colorbrewer.YlGnBu[9])
                              //.colors(colorbrewer.Oranges[9]);
                              .on('d3click', function(d,i) {
-                             	loadOverlapDetail(d.name);
+                             	loadOverlapDetail(d.name, d.row, d.col);
                              });
 
 	loadHeatmap();
 });
 
-function myJsonMethod(data) {	
-  	heatmap.score( function(d) { return d[scoreField]} );
+function loadUCSCDefinition() {
 
-  	var selection = d3.select("#chart").datum(data);
-  	heatmap(selection);	
+	var giggleTracksDefUrl = giggleUCSCBrowserUrl + "?data";
+
+
+	$.ajax({
+	    url: giggleTracksDefUrl,
+	    type: "GET",
+	    crossDomain: true,
+	    dataType: "text",
+	    success: function(data) {
+
+	    	var def = JSON.parse(data);
+			def.sourceFiles.forEach( function( sourceFile ) {
+				var fileName = sourceFile.name.split("tracks/")[1];
+				ucscFileMap[fileName] = sourceFile.position[0];
+			});
+
+			def.dimensions[0].elements.forEach( function(trackName) {
+				ucscTrackNames.push(trackName);
+			})
+			
+
+		},
+	    error: function(error) {
+	    	console.error;
+	    }
+	});	
+
 }
 
-function loadOverlapDetail(fileName) {
+function loadUCSCTracks(chr, start, end) {
+	var giggleTracksUrl = giggleUCSCBrowserUrl + "?region=" + chr + ":" + start + '-' + end;
+	$.ajax({
+	    url: giggleTracksUrl,
+	    type: "GET",
+	    crossDomain: true,
+	    dataType: "text",
+	    success: function(data) {
+	    	var records = [];
+			data.split("\n").forEach(function(row) {
+				if (row == null || row.trim() == "") {
+
+				} else {
+					fields = row.split("\t");
+					
+					var rec = {};
+					rec.name     = fields[0].split("#tracks/")[1];
+					rec.size     = fields[1];
+					rec.overlaps = fields[2];
+
+					var pos      = ucscFileMap[rec.name];
+					rec.pos      = pos;
+					rec.trackName = ucscTrackNames[+pos];
+					records.push(rec);
+
+				}
+			});
+
+			var ucscTracksUrl = ucscBrowserUrl + '&position=' + chr + ":" + start + '-' + end;
+			records.forEach( function(record) {
+				if (+record.overlaps > 0) {
+					ucscTracksUrl += "&" + record.trackName + "=dense";
+				}
+			});
+			var newTab = window.open(ucscTracksUrl, '_blank');
+			newTab.focus();
+
+
+
+
+	    },
+	    error: function(error) {
+	    	console.log(error);
+	    }
+	});
+}
+
+
+function loadOverlapDetail(fileName, row, col) {
+	var rowLabel = coordMap[row + '-' + col].rowLabel;
+	var colLabel = coordMap[row + '-' + col].colLabel;
 	var detailUrl = giggleUrl + "?region=" + $('#overlaps').val() + "&files=" + fileName + "&full";
 	$.ajax({
 	    url: detailUrl,
@@ -63,26 +146,19 @@ function loadOverlapDetail(fileName) {
 			if (header) {				
 				results.push({'header': header, 'rows': records});
 			}
+			$('#overlaps-modal .modal-header').html("<h5>" + rowLabel + "  -  " + colLabel + "</h5>");
 			$('#overlaps-modal .modal-body').html("");
 
 			results.forEach(function(result) {
 				var content = "";
-				content += "<div style='margin-bottom:4px'>" + result.header.name + "</div>";
-				content += "<table style='width:300px'>";
-				content +=	"<tr>" 
-						+ "<td></td>"
-						+ "<td>Chromsome</td>"
-						+ "<td style='text-align:right'>Start</td>"
-						+ "<td style='text-align:right'>End</td>"
-						+ "</tr>";
+				content += "<table style='width:100%'>";
+				
 				var rowNbr = 1;
 				result.rows.forEach( function(row) {
 					content += 
 						"<tr>" 
 						+ "<td>" + rowNbr++ + ".</td>"
-						+ "<td>" + row.chr + "</td>"
-						+ "<td style='text-align:right'>" + addCommas(row.start) + "</td>"
-						+ "<td style='text-align:right'>" + addCommas(row.end) + "</td>"
+						+ "<td>" + "<a href='javascript:void(0)' onclick=\"loadUCSCTracks(" + "'" + row.chr + "'," + row.start + ',' + row.end + ")\">" +row.chr + ' ' + addCommas(row.start) + '-' +  addCommas(row.end) + "</a></td>"
 						+ "</tr>";
 				
 				})
@@ -111,7 +187,7 @@ function loadHeatmap() {
 
 
 	// Get matrix definition
-	var sourceFileMap = {};	
+	sourceFileMap = {};	
 	$.ajax({
 	    url: defUrl,
 	    type: "GET",
@@ -125,6 +201,7 @@ function loadHeatmap() {
 				cellCoord.row = sourceFile.position[0];
 				cellCoord.col = sourceFile.position[1];
 				sourceFileMap[sourceFile.name] = cellCoord;
+				coordMap[cellCoord.row + "-" + cellCoord.col] = {rowLabel: def.dimensions[0].elements[cellCoord.row], colLabel: def.dimensions[1].elements[cellCoord.col]};
 			});
 			def.cells = [];
 
