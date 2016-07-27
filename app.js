@@ -93,7 +93,7 @@ function loadUCSCTracks(chr, start, end) {
 				}
 			});
 			var newTab = window.open(ucscTracksUrl, '_blank');
-			newTab.focus();
+			//newTab.focus();
 
 
 
