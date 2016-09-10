@@ -6,6 +6,9 @@ var ucscBrowserUrl       = "https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19";
 
 var sourceFileMap = {};	
 var coordMap = {};
+var def = null;
+var dataForChart = null;
+var valueField = "overlaps";
 
 var ucscFileMap = {};
 var ucscTrackNames = [];
@@ -13,18 +16,26 @@ var ucscTrackNames = [];
 $(document).ready(function() {
 	$.material.init();
 
+	initBedUploadForm();
+
+	promiseLoadMatrixDefinition().then( function() {
+		heatmap = new heatmapD3().cellSize(15)
+	                             .legendCellSize(20)
+	                             .margin({top: 10, bottom: 10, left: 10, right: 70})
+	                             .colors(colorbrewer.YlGnBu[9])
+	                             //.colors(colorbrewer.Oranges[9]);
+	                             .cellValue( function(d) { return +d[valueField]; } )
+	                             .on('d3click', function(d,i) {
+	                             	loadOverlapDetail(d.name, d.row, d.col);
+	                             });
+
+
+		loadHeatmapForRegion();
+
+	});
+
 	loadUCSCDefinition();
 
-	heatmap = new heatmapD3().cellSize(15)
-                             .legendCellSize(20)
-                             .margin({top: 10, bottom: 10, left: 10, right: 70})
-                             .colors(colorbrewer.YlGnBu[9])
-                             //.colors(colorbrewer.Oranges[9]);
-                             .on('d3click', function(d,i) {
-                             	loadOverlapDetail(d.name, d.row, d.col);
-                             });
-
-	loadHeatmap();
 });
 
 function loadUCSCDefinition() {
@@ -180,78 +191,154 @@ function loadOverlapDetail(fileName, row, col) {
 
 }
 
-function loadHeatmap() {
 
-	var defUrl  = giggleUrl + "?data";
+function promiseLoadMatrixDefinition() {
+	return new Promise( function(resolve, reject) {
+		var defUrl  = giggleUrl + "?data";
+		def = null;
+		sourceFileMap = {};	
+
+		// Get matrix definition
+		$.ajax({
+		    url: defUrl,
+		    type: "GET",
+		    crossDomain: true,
+		    dataType: "text",
+		    success: function(data) {
+
+		    	def = JSON.parse(data);
+				def.sourceFiles.forEach( function( sourceFile ) {
+					var cellCoord = {};
+					cellCoord.row = sourceFile.position[0];
+					cellCoord.col = sourceFile.position[1];
+					sourceFileMap[sourceFile.name] = cellCoord;
+					coordMap[cellCoord.row + "-" + cellCoord.col] = {rowLabel: def.dimensions[0].elements[cellCoord.row], colLabel: def.dimensions[1].elements[cellCoord.col]};
+				});
+				def.cells = [];
+				resolve(def);
+
+			},
+		    error: function(error) {
+		    	console.error();
+		    	reject('Unable to get matrix definition ' + error);
+		    }
+		});
+
+	});
+}
+
+function initBedUploadForm() {
+
+
+	$('#bed-upload-form').submit( function(e){
+		e.preventDefault();
+
+	    var formData = new FormData();
+	    formData.append('files', $('#bed-upload-form input[type=file]')[0].files[0]);
+
+
+
+	    var url = giggleUrl + "filepost";
+
+	    $.ajax({
+	        url         : url,
+	        data        : formData,
+	        cache       : false,
+	        contentType : false,
+	        processData : false,
+	        type        : 'POST',
+	        success     : function(data, textStatus, jqXHR){
+	            loadHeatmapChart(data, def);
+	        },
+	        error       : function(error) {
+	        	if (error.success().hasOwnProperty("responseText") && error.success().responseText.length > 0) {
+	        		loadHeatmapChart( error.success().responseText, def);
+	        	}
+ 	        	console.error();      	
+	        }
+	    });
+	});	
+}
+
+
+function loadHeatmapForRegion() {
+
 	var dataUrl = giggleUrl + "?region=" + $('#overlaps').val();
 
-
-	// Get matrix definition
-	sourceFileMap = {};	
+	// get matrix data (tab delimited) and fill in heatmap
 	$.ajax({
-	    url: defUrl,
+	    url: dataUrl,
 	    type: "GET",
 	    crossDomain: true,
 	    dataType: "text",
 	    success: function(data) {
+	    	loadHeatmapChart(data, def);
 
-	    	def = JSON.parse(data);
-			def.sourceFiles.forEach( function( sourceFile ) {
-				var cellCoord = {};
-				cellCoord.row = sourceFile.position[0];
-				cellCoord.col = sourceFile.position[1];
-				sourceFileMap[sourceFile.name] = cellCoord;
-				coordMap[cellCoord.row + "-" + cellCoord.col] = {rowLabel: def.dimensions[0].elements[cellCoord.row], colLabel: def.dimensions[1].elements[cellCoord.col]};
-			});
-			def.cells = [];
-
-			var recordMap = {};
-
-			// get matrix data (tab delimited) and fill in heatmap
-			$.ajax({
-			    url: dataUrl,
-			    type: "GET",
-			    crossDomain: true,
-			    dataType: "text",
-			    success: function(data) {
-					data.split("\n").forEach(function(row) {
-						fields = row.split("\t");
-						if (fields.length == 0 || fields[0] == "") {
-
-						} else {
-							var rec = {};
-							rec.name = fields[0].split("split/")[1];
-							rec.size = fields[1];
-							rec.overlaps = fields[2];
-							rec.row = sourceFileMap[rec.name].row;
-							rec.col = sourceFileMap[rec.name].col;
-							def.cells.push(rec);
-
-						}
-					});
-
-					maxValue = d3.max(def.cells, function(d,i) {return d.overlaps});
-					if (maxValue <= 2) {
-						maxValue = 3;
-					}
-					heatmap.colors(colorbrewer.YlGnBu[Math.min(maxValue, 9)])
-
-					
-				  	var selection = d3.select("#chart").datum(def);
-		  			heatmap(selection);	
-
-			    },
-			    error: function(error) {
-
-			    }
-			});
-		},
+	    },
 	    error: function(error) {
-	    	console.error;
+
 	    }
 	});
 
+}
 
+function loadHeatmapChart(data, theDef) {
+	def = theDef ? theDef : def; 
+	dataForChart = data ? data : dataForChart;
+
+	def.cells = [];
+
+	if($("input[type='radio'].radio-value-field").is(':checked')) {
+    	valueField = $("input[type='radio'].radio-value-field:checked").val();    	
+	}
+
+	dataForChart.split("\n").forEach(function(row) {
+		fields = row.split("\t");
+		if (fields.length == 0 || fields[0] == "") {
+
+		} else {
+			var rec = {};
+			rec.name = fields[0].split("split/")[1];
+			rec.size = fields[1];
+			var overlaps = fields[2];
+			if (overlaps.indexOf(":") > 0) {
+				rec.overlaps = overlaps.split(":")[1];
+			} else {
+				rec.overlaps = overlaps;
+			}
+			if (fields.length > 3) {
+				var ratio = fields[3];
+				if (ratio.indexOf(":") > 0) {
+					rec.ratio = ratio.split(":")[1];
+				} else {
+					rec.ratio = ratio;
+				}				
+			}
+			if (fields.length > 4) {
+				var sig = fields[4];
+				if (sig.indexOf(":") > 0) {
+					rec.sig = sig.split(":")[1];
+				} else {
+					rec.sig = sig;
+				}	
+				rec.sig = rec.sig * 100;			
+			}
+			rec.row = sourceFileMap[rec.name].row;
+			rec.col = sourceFileMap[rec.name].col;
+			def.cells.push(rec);
+
+		}
+	});
+
+	maxValue = d3.max(def.cells, function(d,i) {return d.overlaps});
+	if (maxValue <= 2) {
+		maxValue = 3;
+	}
+	heatmap.colors(colorbrewer.YlGnBu[Math.min(maxValue, 9)])
+
+	
+  	var selection = d3.select("#chart").datum(def);
+	heatmap(selection);	
 
 }
 

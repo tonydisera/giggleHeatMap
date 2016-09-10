@@ -34,30 +34,68 @@
         padding-top: 5px;
         margin-top: 0px;        
       }
+      #upload-button {
+        font-size: 13px;
+        padding-bottom: 5px;
+        padding-top: 5px;
+        margin-top: 0px;        
+      }
       #control-panel {
         margin-top:10px;
+      }
+      #overlaps {
+        width: 200px;
+      }
+      label {
+        width: 80px !important;
+      }
+      .form-control {
+        font-size: 13px !important;
+      }
+      ::-webkit-input-placeholder {
+         font-size: 13px !important;
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div id="control-panel">
-        <div style="margin-top:5px;float:left;inline-block">
-          <label>Overlaps</label>
-          <input id="overlaps" value="chr1:1-5000000"></input>
-          <button id="go-button" onclick="loadHeatmap()" class="btn btn-default btn-raised">Go</button>
+        <div style="float:left;display:inline-block">
+          <div style="margin-top:5px;float:left;">
+            <label>Enter Region</label>
+            <input id="overlaps" value="chr1:1-5000000"></input>
+            <button id="go-button" onclick="loadHeatmapForRegion()" style="margin-left:36px;" class="btn btn-default btn-raised">Go</button>
+          </div>
+          <div style="clear:both;margin-top:5px;"><label>OR</label></div>
+          <div style="margin-top:0px;clear:both">
+            <label>Upload file</label>
+            <form id="bed-upload-form" style="display:inline-block"  method="post" enctype="multipart/form-data">
+              <div class="form-group" style="display:inline-block;width:230px;margin-top:0px">
+                 <input style="display:inline-block;"  name="file" type="file">
+                 <input type="text" style="display:inline-block" readonly="" class="form-control" placeholder="choose file...">
+              </div>
+             <input id="upload-button" style="clear:both;display:inline-block;width:100px" class="btn btn-default btn-raised" type="submit" value=" Send ">
+            </form>
+          </div>
         </div>
-        <div class="hide" style="float:left;inline-block;margin-left:50px;">
-          <span style="display:inline-block" class="radio-value-field radio radio-primary">
+
+        <div class="" style="float:left;inline-block;margin-left:50px;">
+          <span style="display:inline-block;width:100px" class="radio-value-field radio radio-primary">
             <label>
-              <input type="radio" name="radio-value-field" id="radio-value-overlaps" onclick="loadHeatmap();" checked="true" value="overlaps">
+              <input type="radio" class="radio-value-field" name="radio-value-field" id="radio-value-overlaps" onclick="loadHeatmapChart()" checked="true" value="overlaps">
              Overlaps
             </label>
           </span>
-          <span style="display:inline-block" class="radio-value-field radio radio-primary">
+          <span style="display:inline-block;width:80px" class="radio-value-field radio radio-primary">
             <label>
-              <input type="radio" name="radio-value-field" onclick="loadHeatmap();" id="radio-value-size" value="size" >
-              Size
+              <input type="radio" class="radio-value-field" name="radio-value-field" onclick="loadHeatmapChart()" id="radio-value-ratio" value="ratio" >
+              Ratio
+            </label>
+          </span>
+          <span style="display:inline-block;width:100px" class="radio-value-field radio radio-primary">
+            <label>
+              <input type="radio" class="radio-value-field" name="radio-value-field" onclick="loadHeatmapChart()" id="radio-value-sig" value="sig" >
+              Significance
             </label>
           </span>
         </div>
