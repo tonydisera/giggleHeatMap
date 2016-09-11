@@ -1,8 +1,4 @@
-Issues:
-
-GiggleServer myJsonMethod -> undefined
-
-Zero fill data?
+Figure out why 500 status code returned from filepost
 
 
 
