@@ -54,23 +54,34 @@
       }
       ::-webkit-input-placeholder {
          font-size: 13px !important;
+      } 
+      .checkbox, .radio {
+        margin-top: 0px;
       }
+      input#giggle-url {
+        width: 300px !important;
+      }
+      input#giggle-tracks-url {
+        width: 300px !important;
+      }
+
     </style>
   </head>
   <body>
     <div class="container">
+      <h3>Giggle</h3>
       <div id="control-panel">
-        <div style="float:left;display:inline-block">
-          <div style="margin-top:5px;float:left;">
+        <div style="display:inline-block">
+          <div >
             <label>Enter Region</label>
             <input id="overlaps" value="chr1:1-5000000"></input>
             <button id="go-button" onclick="loadHeatmapForRegion()" style="margin-left:36px;" class="btn btn-default btn-raised">Go</button>
           </div>
-          <div style="clear:both;margin-top:5px;"><label>OR</label></div>
+          <div ><label>OR</label></div>
           <div style="margin-top:0px;clear:both">
             <label>Upload file</label>
             <form id="bed-upload-form" style="display:inline-block"  method="post" enctype="multipart/form-data">
-              <div class="form-group" style="display:inline-block;width:230px;margin-top:0px">
+              <div class="form-group" style="padding:0px;display:inline-block;width:230px;margin-top:0px">
                  <input style="display:inline-block;"  name="file" type="file">
                  <input type="text" style="display:inline-block" readonly="" class="form-control" placeholder="choose file...">
               </div>
@@ -79,27 +90,37 @@
           </div>
         </div>
 
-        <div class="" style="float:left;inline-block;margin-left:50px;">
-          <span style="display:inline-block;width:100px" class="radio-value-field radio radio-primary">
+        <div class="" style="vertical-align:top;display:inline-block;margin-left:50px;width:120px;">
+          <span  class="radio-value-field radio radio-primary">
             <label>
               <input type="radio" class="radio-value-field" name="radio-value-field" id="radio-value-overlaps" onclick="loadHeatmapChart()" checked="true" value="overlaps">
              Overlaps
             </label>
           </span>
-          <span style="display:inline-block;width:80px" class="radio-value-field radio radio-primary">
+          <span  class="radio-value-field radio radio-primary">
             <label>
               <input type="radio" class="radio-value-field" name="radio-value-field" onclick="loadHeatmapChart()" id="radio-value-ratio" value="ratio" >
               Ratio
             </label>
           </span>
-          <span style="display:inline-block;width:100px" class="radio-value-field radio radio-primary">
+          <span  class="radio-value-field radio radio-primary">
             <label>
               <input type="radio" class="radio-value-field" name="radio-value-field" onclick="loadHeatmapChart()" id="radio-value-sig" value="sig" >
               Significance
             </label>
           </span>
         </div>
-      </div>
+
+        <div class="" style="vertical-align:top;display:inline-block;margin-left:50px;">
+          <div>
+            <label style="width:100px !important" >Giggle</label>
+            <input id="giggle-url"/>
+          </div>
+          <div style="margin-top:10px;">
+            <label style="width:100px !important;">Visualize tracks</label>
+            <input id="giggle-tracks-url"/>
+          </div>
+        </div>
     </div>
     <div id="chart"></div>
     </div>

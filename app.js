@@ -16,6 +16,9 @@ var ucscTrackNames = [];
 $(document).ready(function() {
 	$.material.init();
 
+	$('#giggle-url').val(giggleUrl);
+	$('#giggle-tracks-url').val(giggleUCSCBrowserUrl);
+
 	initBedUploadForm();
 
 	promiseLoadMatrixDefinition().then( function() {
@@ -236,7 +239,7 @@ function initBedUploadForm() {
 	    var formData = new FormData();
 	    formData.append('files', $('#bed-upload-form input[type=file]')[0].files[0]);
 
-
+	    getGiggleUrls();
 
 	    var url = giggleUrl + "filepost";
 
@@ -260,9 +263,15 @@ function initBedUploadForm() {
 	});	
 }
 
+function getGiggleUrls() {
+	giggleUrl = $('#giggle-url').val();
+	giggleUCSCBrowserUrl = $('#giggle-tracks-url').val();
+}
+
 
 function loadHeatmapForRegion() {
 
+	getGiggleUrls();
 	var dataUrl = giggleUrl + "?region=" + $('#overlaps').val();
 
 	// get matrix data (tab delimited) and fill in heatmap
