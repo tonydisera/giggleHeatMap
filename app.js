@@ -236,9 +236,10 @@ function initBedUploadForm() {
 	$('#bed-upload-form').submit( function(e){
 		e.preventDefault();
 
-	    var formData = new FormData();
-	    formData.append('files', $('#bed-upload-form input[type=file]')[0].files[0]);
-
+	    
+	    var formData = new FormData(this);
+		//formData.append($('#bed-upload-form input[type=file]')[0].files[0].name, $('#bed-upload-form input[type=file]')[0].files[0]);
+	    
 	    getGiggleUrls();
 
 	    var url = giggleUrl + "filepost";
@@ -246,9 +247,10 @@ function initBedUploadForm() {
 	    $.ajax({
 	        url         : url,
 	        data        : formData,
-	        cache       : false,
+ 	        cache       : false,
 	        contentType : false,
 	        processData : false,
+
 	        type        : 'POST',
 	        success     : function(data, textStatus, jqXHR){
 	            loadHeatmapChart(data, def);
