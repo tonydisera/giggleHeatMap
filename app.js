@@ -10,6 +10,8 @@ var def = null;
 var dataForChart = null;
 var valueField = "overlaps";
 
+var uploadedFileName = null;
+
 var ucscFileMap = {};
 var ucscTrackNames = [];
 
@@ -114,7 +116,8 @@ function loadUCSCTracks(chr, start, end) {
 
 	    },
 	    error: function(error) {
-	    	console.log(error);
+	    	console.log("An error occurred when getting UCSC track info " + giggleTracksUrl);
+	    	console.error();
 	    }
 	});
 }
@@ -123,7 +126,14 @@ function loadUCSCTracks(chr, start, end) {
 function loadOverlapDetail(fileName, row, col) {
 	var rowLabel = coordMap[row + '-' + col].rowLabel;
 	var colLabel = coordMap[row + '-' + col].colLabel;
-	var detailUrl = giggleUrl + "?region=" + $('#overlaps').val() + "&files=" + fileName + "&full";
+
+	var detailUrl = giggleUrl;
+	if (uploadedFileName) {
+		detailUrl += "?query=" + uploadedFileName;
+	} else {
+		detailUrl += "?region=" + $('#overlaps').val();
+	}
+	detailUrl += "&files=" + fileName + "&full";
 	$.ajax({
 	    url: detailUrl,
 	    type: "GET",
@@ -170,12 +180,11 @@ function loadOverlapDetail(fileName, row, col) {
 				var rowNbr = 1;
 				result.rows.forEach( function(row) {
 					content += 
-						"<tr>" 
-						+ "<td>" + rowNbr++ + ".</td>"
+						 "<tr>" 
+						+   "<td>" + rowNbr++ + ".</td>"
 						+ "<td>" + "<a href='javascript:void(0)' onclick=\"loadUCSCTracks(" + "'" + row.chr + "'," + row.start + ',' + row.end + ")\">" +row.chr + ' ' + addCommas(row.start) + '-' +  addCommas(row.end) + "</a></td>"
-						+ "</tr>";
-				
-				})
+					    + "</tr>";
+				});
 				content += "</table>";
 				$('#overlaps-modal .modal-body').append(content);
 			});
@@ -188,7 +197,8 @@ function loadOverlapDetail(fileName, row, col) {
 
 	    },
 	    error: function(error) {
-	    	console.log(error);
+	    	console.log("An error occurred when getting overlap detail " + detailUrl);
+	    	console.error();
 	    }
 	});	
 
@@ -236,14 +246,34 @@ function initBedUploadForm() {
 	$('#bed-upload-form').submit( function(e){
 		e.preventDefault();
 
+		// Validate that file was uploaded
+		$('.alert').addClass("hide");
+		if ($('#bed-upload-form input[type=file]')[0].files.length == 0) {
+			$('#no-file-warning').removeClass("hide");			
+		}
+
+		uploadedFileName =  $('#bed-upload-form input[type=file]')[0].files[0].name;
+
+		// Enable odds ratio and default as checked
+		$("#radio-value-ratio").prop("checked", true);
+		$("#radio-value-ratio-span").removeClass("hide");
+
+		// Show title
+		$("#title").text("File " + uploadedFileName);
+
+		// Show loading gif
+		$('.loader').removeClass("hide");
+
+
 	    
 	    var formData = new FormData(this);
-		//formData.append($('#bed-upload-form input[type=file]')[0].files[0].name, $('#bed-upload-form input[type=file]')[0].files[0]);
+		//formData.append(uploadedFileName, $('#bed-upload-form input[type=file]')[0].files[0]);
 	    
 	    getGiggleUrls();
 
 	    var url = giggleUrl + "filepost";
 
+	  
 	    $.ajax({
 	        url         : url,
 	        data        : formData,
@@ -253,9 +283,11 @@ function initBedUploadForm() {
 
 	        type        : 'POST',
 	        success     : function(data, textStatus, jqXHR){
+	        	$('.loader').addClass("hide");
 	            loadHeatmapChart(data, def);
 	        },
 	        error       : function(error) {
+	        	$('.loader').addClass("hide");
 	        	if (error.success().hasOwnProperty("responseText") && error.success().responseText.length > 0) {
 	        		loadHeatmapChart( error.success().responseText, def);
 	        	}
@@ -272,9 +304,27 @@ function getGiggleUrls() {
 
 
 function loadHeatmapForRegion() {
+	// Validate that region was filled in
+	$('.alert').addClass("hide");
+	if ($('#overlaps').val() == null || $('#overlaps').val().trim() == "") {
+		$('#no-region-warning').removeClass("hide");
+	}
+
+	// Switch to 'overlap' and disable 'odds ratio'
+	$("#radio-value-overlaps").prop("checked", true);
+	$("#radio-value-ratio-span").addClass("hide");
+
+	// Set title
+	$("#title").text("Region " + $('#overlaps').val());
+
+	// Show loading animation
+	$('.loader').removeClass("hide");
+
 
 	getGiggleUrls();
 	var dataUrl = giggleUrl + "?region=" + $('#overlaps').val();
+
+	uploadedFileName = null;
 
 	// get matrix data (tab delimited) and fill in heatmap
 	$.ajax({
@@ -283,11 +333,12 @@ function loadHeatmapForRegion() {
 	    crossDomain: true,
 	    dataType: "text",
 	    success: function(data) {
+	        $('.loader').addClass("hide");
 	    	loadHeatmapChart(data, def);
 
 	    },
 	    error: function(error) {
-
+	    	$('.loader').addClass("hide");
 	    }
 	});
 
